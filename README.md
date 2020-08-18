@@ -18,14 +18,15 @@ It also writes a single new .csv file with the integrated data for each animal, 
 
 I stopped work on it before ISEC 2020 and then Emma gave me the Global SRW RAD genotype data and I started working on that.
 
+The code could probably be sped up a lot by finding all possible geno-, haplo-, and sex-pair probabilities just once, and then just indexing them for each observed pair.  
+
+It could also probably be simplified by setting NA probabilities to 1 and/or their logs to 0.  It only needs NAs sometimes where adding probabilities over cases, so it can be set to 1 or 0 at the end of such calculations.
+
+But these might not be worth doing unless/until I end up running simulations or something.
+
 Things to do:
-- Add to github, maybe combine the report and the readme
 - Fix the sex probabilities, they're not 0.5 (mean(whale_data$SEX == "M", na.rm = T) -> 0.455)
-- Probably way faster to find possible sex and haplotype combinations and reference them rather than computing them individually, but probably not worth rewriting now.  Quite tricky dealing with missing data.  Really not a big deal, already got sucked into some work that wasn't really worth it.  Maybe just make a note.
 - Get the final results sorted
-- Would be interesting to compare fsp vs up plods, see if the curves are more informative.  Takes mixed kinships into account more maybe.
-- Change likely POPs to possible POPs, depending on final PLOD plots.  
 - Update the report and web app.  Don't need too much detail, just the main results/explanation.
-- Change all density plots to histograms
-- Update folder on gdrive
+- Maybe combine the report and the readme
 - Make copy of web app for Global dataset.

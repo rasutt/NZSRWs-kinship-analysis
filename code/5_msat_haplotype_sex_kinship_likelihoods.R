@@ -173,28 +173,21 @@ rm(hp_probs_sex_up, hp_probs_sex_hsp, hp_probs_sex_pop, hp_probs_sex_po,
 
 
 
-# Find kinship log likelihoods given sexes and haplopairs for simple kinships.
-# Update log haplopair probabilities by adding sex-pair probabilities, or
-# setting to them if originally NA, all conditional on kinship
+# Find kinship log likelihoods given sexes and haplopairs for simple kinships
 
-
-# Find where sexes and haplotypes missing or not
-hp_na <- is.na(same_hts)
-hp_not_na <- !hp_na
-sexp_not_na <- !is.na(same_sex)
-hp_sexp_not_na_inds <- which(hp_not_na & sexp_not_na)
+# Probabilities for missing haplopairs are 1, logs are 0
+kin_log_likes_hps_sexes <- log_hp_probs_sex_kin
+kin_log_likes_hps_sexes[is.na(log_hp_probs_sex_kin)] <- 0
 
 # Non-self kinships, sex-pairs are independent
-kin_log_likes_hps_sexes <- log_hp_probs_sex_kin
-kin_log_likes_hps_sexes[which(hp_na & sexp_not_na), 1:6] <- log(1/4)
-kin_log_likes_hps_sexes[hp_sexp_not_na_inds, 1:6] <- 
-  kin_log_likes_hps_sexes[hp_sexp_not_na_inds, 1:6] + log(1/4)
+sexp_not_na <- !is.na(same_sex)
+kin_log_likes_hps_sexes[sexp_not_na, 1:6] <-
+  kin_log_likes_hps_sexes[sexp_not_na, 1:6] + log(1/4)
 
 # Self kinships, sexes cannot be different
-kin_log_likes_hps_sexes[which(hp_na & same_sex), 7] <- log(1/2)
-hp_not_na_same_sex_inds <- which(hp_not_na & same_sex)
-kin_log_likes_hps_sexes[hp_not_na_same_sex_inds, 7] <- 
-  kin_log_likes_hps_sexes[hp_not_na_same_sex_inds, 7] + log(1/2)
+same_sex_inds <- which(same_sex)
+kin_log_likes_hps_sexes[same_sex_inds, 7] <-
+  kin_log_likes_hps_sexes[same_sex_inds, 7] + log(1/2)
 kin_log_likes_hps_sexes[which(!same_sex), 7] <- -Inf
 
 
