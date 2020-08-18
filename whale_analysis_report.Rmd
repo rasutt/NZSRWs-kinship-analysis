@@ -1,0 +1,538 @@
+---
+title: "Right whale close kin report"
+author: "Robin"
+date: "31/05/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This is a report I was making to separate various outputs that I thought were worth reporting from the code to process the data and save the results.  I never got it to even a first draft, and it's out of sync with the rest of the code now, for example there's no whale_analysis.Rdata anymore, but seems like its probably worth tidying up.  Might be a nice way to summarise the work.
+
+## Microsatellite genotypes, missing data, and homozygosity
+
+```{r}
+# Load imported and processed data.
+load("whale_analysis.Rdata")
+
+
+# Review missing data
+
+# Show rows where one allele missing but other not
+whale_data[rowSums(missing_ales_1 != missing_ales_2) > 0, ]
+
+# Three of these are rows with blank cells that happen to start halfway through
+# a locus. I should check whether this data exists in the larger database.  
+
+# One is the line that had the OOB entry.
+
+# Show proportion of missing data overall
+round(mean(missing_ales_1), 3)
+
+# Find and show proportions of missing data by locus from largest to smallest
+props_missing <- round(colMeans(missing_ales_1), 3)
+names(props_missing) <- locus_names
+props_missing[order(prop_missing, decreasing = T)]
+
+
+# Review homozygosity
+
+# Find homozygous alleles
+homo_ales <- ales_mat_1 == ales_mat_2
+
+# Find expected proportions of homozygous alleles at each locus based on allele
+# distributions
+props_homo_exp <- sapply(ale_dists, function(dist) sum(dist^2))
+
+# Show observed versus expected homozygosity over all loci
+round(
+  c(
+    observed_homozygosity = mean(homo_ales, na.rm = T),
+    expected_homozygosity = mean(props_homo_exp)
+  ),
+  3
+)
+
+# There seems to be very little homozygosity due to dropout overall.
+
+# Find proportion of homozygous alleles at each locus
+props_homo_obs <- colMeans(homo_ales, na.rm = T)
+
+# Show observed versus expected homozygosity by locus from largest to smallest
+# difference
+round(
+  data.frame(
+    observed_homozygosity = props_homo_obs,
+    expected_homozygosity = props_homo_exp,
+    excess_homozygosity = props_homo_obs - props_homo_exp,
+    row.names = locus_names
+  )[head(order(abs(props_homo_unexp), decreasing = T)), ],
+  3
+)
+
+# TR3G1 is the only locus with significant excess homozygosity.  From Emma's
+# thesis (pg.84):
+
+# "Of the 13 loci retained in the dataset, 12 did not deviate significantly from
+# Hardy-Weinberg equilibrium and showed no signs of stutter, allelic dropout or
+# null alleles (Table 2.5). The exception was TR3G1; this locus had evidence of
+# allelic dropout but was retained as it was highly informative and allelic
+# dropout was accounted for by re-amplifying mismatching loci for suspected
+# replicate samples."
+
+# It looks like about half of the apparent homozygotes at this locus are due to
+# allelic dropout, about 15% of the data.  We should double-check pairs with
+# kinship likelihoods that are influenced by these data.
+```
+
+## Covariates and haplotypes
+
+Remember that year, location, and field data have been selected randomly when multiple captures, as Emma just chose the ones with the strongest genetic results, least missing markers or something.
+
+```{r}
+data.frame(table(sex_field_hap$DLP))
+```
+
+```{r}
+table(sex_field_hap$field.data)
+
+# Check with Emma that subadult != juvenile != calf.
+
+```
+
+
+```{r}
+# Show results
+table(sex_field_hap$SEX)
+
+
+
+
+# Sort names for animals for which an original entry has not yet been found
+sort(
+  whale_data$Sample.Name[
+    !(whale_data$Sample.Name %in% sex_field_hap$Sample.Name)
+    ]
+)
+
+# Check these with Emma.  Still lots of 2009 animals unfound, where could they be? 
+
+# Show results
+table(whales_sex_field_hap$capture_location)
+
+# Check with Emma that sample names beginning with U represent calves.  Also she
+# mentioned a list of calves so send her the current numbers and ask her to
+# check them too. Also remember to check if alternative U names of mainland
+# animals important.
+
+
+
+# Bring other validation stuff in here too
+
+# Check missing sex data
+sum(is.na(whales_sex_field_hap$SEX))
+
+# Check missing haplotype data.
+sum(is.na(whales_sex_field_hap$DLP))
+
+
+
+# Why do some animals have NA for field data?  Because I haven't found their
+# metadata yet.  I think Emma said these were ones that hadn't been entered in
+# the official database yet or something.  22 in total, all at the end of the list
+whale_data[which(is.na(whale_data$field.data)), 1:10]
+
+```
+
+## Shared alleles and parent-offspring pairs
+
+```{r}
+# Check the proportion of genopairs missing at each locus.
+# Plot the proportions
+barplot(
+  round(colMeans(missing_genopairs), 3),
+  main = "Proportion of pairs with one or both genotypes missing",
+  xlab = "Locus",
+  ylab = "Proportion" 
+)
+
+
+# These should just be double the proportions of genotypes missing at each
+# locus, minus their square, and that looks about right.
+
+# For each pair of animals, find the number of loci where both genotypes are
+# observed.
+# Plot results
+barplot(
+  table(ns_loci_both_obs),
+  main = "Number of loci where both genotypes observed",
+  xlab = "Number of loci",
+  ylab = "Number of pairs"
+)
+
+
+# For each pair of animals, find the number of loci where they are observed to
+# share at least one allele.
+# Plot results
+plot(
+  density(ns_loci_ales_shared / ns_loci_both_obs),
+  main = "Proportion of loci with shared alleles",
+  xlab = "Proportion of loci",
+  ylab = "Density of pairs"
+)
+
+
+
+# Print results
+cat("There are", length(possible_pop_inds), "possible parent-offspring pairs.\n")
+
+
+# Show the first few possible parent-offspring pairs.
+
+
+# Find the indices of the first few parent-offspring pairs
+pop_inds_1 <- head(possible_pop_inds)
+
+# Show the results
+data.frame(
+  sample_name_1 = whale_data$Sample.Name[ani_inds_1[pop_inds_1]], 
+  sample_name_2 = whale_data$Sample.Name[ani_inds_2[pop_inds_1]], 
+  ifelse(shared_ales[pop_inds_1, ], "alleles shared", "none shared")
+)
+
+
+# Find the number of unique animals in possible parent-offspring pairs.
+# Print the results
+cat(
+  "There are", 
+  length(unique(as.vector(possible_pops))), 
+  "animals with at least one possible parent-offspring connection.\n"
+)
+```
+
+## Parent-offspring pairs from kinship likelihoods
+
+```{r}
+
+# For missing data, the conditional probability of the second genotype given
+# that one allele is ibd to an allele in the first is equal to one, because it
+# could be anything.  The same result holds for unrelated and self-pair
+# likelihoods. Including missing data makes no difference to the relative
+# likelihood of animals being kin, or anything else.  And since you can't
+# compare probabilities for genopairs with and without missing data, there's
+# really no point including it.
+
+# In my approach to missing data I was just confusing the conditional
+# probability with the joint probability for the second genotype.  That's all.
+
+
+
+# Seems like two second-order kinships is the most possible.  Full-sibs, twice
+# grandparent-offspring, and half-sibs and grandparent-offspring.
+
+# Also four third-order kinships, great-grandparent through all grandparents, or
+# aunt full-sibs with both parents, or any combination.  Only two possible
+# without inbreeding.
+
+# Eight fourth-order, first-cousins where all parents full-sibs, four without
+# inbreeding, all non-breeding parents half-sibs.
+
+# Pattern obvious, and won't get closer to pops than full-sibs without
+# inbreeding.
+
+
+
+# Find the number of possible parent-offspring pairs in the sense of sharing an
+# allele at every non-missing locus
+sum(is.finite(log_gp_probs_pop))
+# There are 694
+
+# Check same possible pops from shared alleles and kinship likelihoods
+all(which(is.finite(log_gp_probs_pop)) == possible_pop_inds)
+```
+
+
+## Kinship log likelihoods
+
+```{r}
+# Show first kinship log likelihoods based on microsatellite genotypes
+head(kin_log_likes)
+
+# Find kin log likelihoods for possible pops
+possible_pop_kin_lls <-  kin_log_likes[possible_pop_inds, ]
+
+# Show first rows for possible pops
+head(possible_pop_kin_lls)
+
+# Find number of possible parent-offspring pairs more possible to be unrelated
+sum(possible_pop_kin_lls[, 1] > possible_pop_kin_lls[, 3])
+
+# Looks like the original, simple analysis, based on shared microsatellite
+# alleles, is quite good for pops in this dataset.  
+
+# It's possible to have genotypes that share alleles at a locus but which are
+# still more likely to be unrelated than pops.  For example, if a pair of
+# heterozygous genotypes share only one allele, the conditional probability of
+# the second given unrelated is 2 * the product of the allele probabilities, and
+# given pop, is 1/2 the unshared allele probability.  So if the probability of
+# the shared allele is greater than 0.25, the unrelated pair prob is higher. For
+# snps the probabilities are often > 0.25, but you can't have two heteros that
+# only share one ale.
+
+# Find number of possible parent-offspring pairs more likely to be half-siblings
+sum(possible_pop_kin_lls[, 2] > possible_pop_kin_lls[, 3])
+
+# When a pair has some loci that are very likely for pops but not for ups, and
+# vice versa, then the likelihood for hsps can bring them closer together, and
+# give a greater product than the larger of the other two, which makes sense.  I
+# feel like this should be cauchy schwartz or the triangle inequality or
+# something, but I can't figure it out lol.
+
+# or full-siblings
+sum(possible_pop_kin_lls[, 4] > possible_pop_kin_lls[, 3])
+
+# 19 pairs, for one mixed kinship, without inbreeding, suggests a decent number
+# of possible pops are more likely something else.
+
+# Function to print microsatellite genopair data - seems to be broken
+print_msats <- function(inds) {
+  for (ind in inds) {
+    print(
+      rbind(
+        shared_ales[ind, ],
+        both_ales_shared[ind, ],
+        round(kin_log_likes_msats[ind, ], 2),
+        MLK = max_like_kinships[ind]
+      )
+    )
+  }
+}
+
+# Print microsatellite genopair data for random selection of animals
+print_msats(sample(n_pairs, 10))
+
+
+
+# Show results for haplopairs
+cbind(
+  whale_data[ani_inds_1, c(4, 6)],
+  whale_data[ani_inds_2, c(4, 6)],
+  kin_log_likes_hts
+)[sample(n_pairs, 50), ]
+
+# Show kinship likelihoods given haplopairs and sexes for random selection of
+# animals
+cbind(
+  whale_data[ani_inds_1, c(3, 6)],
+  whale_data[ani_inds_2, c(3, 6)],
+  round(kin_log_likes_hps_sexes, 2),
+  MLK = max_like_kinships
+)[sample(n_pairs, 20), ]
+
+# The former are sometimes ignored when the haplotypes are known but one or both
+# of the sexes are unknown (eg. when it is less trivial than for unrelated
+# pairs) but this almost never happens in this data. It would be easy to add
+# later, as they are just the weight averages of the possible cases.
+
+```
+
+
+## Final kinship analyses
+
+```{r}
+# numbers of pairs for which each kinship is most likely, given only this data
+# (no prior probability)
+max_like_kin_tab
+
+# This isn't neccessarily that significant because it doesn't take into account
+# the prior probability of each kinship, but it could do if we had ages, or
+# expressions independent of ages, in terms of population parameters of
+# interest, in which case we could also estimate them by maximising the
+# likelihood of the observed genopairs.  In the meantime maybe go straight to
+# hsp vs up plods and look for distinct POPs. Looks like there might not be any.
+# Might be interesting mainly to check plods vs allele analysis
+
+# Find the number of pairs for which some parent-offspring kinship is most
+# likely
+sum(max_like_kin_tab[c("PO_OP", "PO", "OP")])
+
+# Check that the results match up with the shared allele analysis
+sum(max_like_kinship[possible_pop_inds] %in% c("PO_OP", "PO", "OP"))
+table(max_like_kinship[possible_pop_inds])
+```
+
+```{r}
+# Plot half-siblings versus unrelated pair plods
+
+# Set two plots per page
+par(mfrow = c(2, 1))
+
+# Plot full histogram
+hist(
+  hsp_up_plods, 
+  breaks = 200,
+  main = "Half-sibling versus unrelated pair PLODs",
+  xlab = "PLOD"
+)
+
+# Show rare values
+hist(
+  hsp_up_plods, 
+  breaks = 200,
+  main = "Large PLODs suggest close-kin",
+  xlab = "PLOD",
+  ylim = c(0, 50)
+)
+
+points(
+  possible_pop_plods, 
+  rep(0.05, length(possible_pop_inds)), 
+  pch = 'l', 
+  col = 2
+)
+```
+
+```{r}
+# Plot half-siblings versus unrelated pair plods for pairs with complete data
+
+# Set two plots per page
+par(mfrow = c(2, 1))
+
+# Plot full histogram
+hist(
+  hsp_up_plods_comp, 
+  breaks = 200,
+  main = "PLODs for pairs with complete data",
+  xlab = "PLOD"
+)
+
+# Show rare values
+hist(
+  hsp_up_plods_comp, 
+  breaks = 200,
+  main = "Large PLODs suggest close-kin",
+  xlab = "PLOD",
+  ylim = c(0, 20)
+)
+
+# Plot PLODs for possible POPs
+poss_pop_hsp_plods_comp_hist_data <- hist(
+  poss_pop_hsp_plods_comp, 
+  breaks = 100,
+  plot = F
+)
+plot(poss_pop_hsp_plods_comp_hist_data, add = T, border = 'red')
+
+# The possible POPs that were more likely to be UPs had missing data, not
+# surprising.  
+
+
+
+# Plot full-sibling versus unrelated pair plods for pairs with complete data
+
+# Set two plots per page
+par(mfrow = c(2, 1))
+
+# Plot full histogram
+hist(
+  fsp_up_plods_comp, 
+  breaks = 200,
+  main = "FSP vs UP PLODs for pairs with complete data",
+  xlab = "PLOD"
+)
+
+# Show rare values
+hist(
+  fsp_up_plods_comp, 
+  breaks = 200,
+  main = "Large PLODs suggest close-kin",
+  xlab = "PLOD",
+  ylim = c(0, 20)
+)
+
+# Plot PLODs for possible POPs
+poss_pop_fsp_plods_comp_hist_data <- hist(
+  poss_pop_fsp_plods_comp, 
+  breaks = 100,
+  plot = F
+)
+plot(poss_pop_fsp_plods_comp_hist_data, add = T, border = 'red')
+
+# Not much different.  Seems more noisy?  Widens the curve, but also pushes the
+# possible POPs to the right and narrows their curve?  Should check for the RAD
+# data.  Doesn't look like this data is enough to distinguish the actual POPs by
+# this method alone.
+```
+
+
+```{r}
+# Create table of kinship analysis data, including proportions of msat loci with
+# 0, 1, and 2 alleles shared, kinship likelihoods, and most likely kinship
+pairs_data <- data.frame(
+  round(
+    cbind(
+      props_loci_ns_ales_shared,
+      kin_log_likes_msats_hps_sexes
+    ),
+    2
+  ),
+  MLK = max_like_kinships
+)
+head(pairs_data)
+
+# These data are confusing without sex and haplotype
+
+
+
+# Create function to print pairs of animals and their kinship likelihoods given
+# their indices
+print_pairs <- function(pairs_inds) {
+  
+  # Loop over the indices
+  for (ind in pairs_inds) {
+    
+    # # Print the covariates for the animals
+    # print(whale_data[c(ani_inds_1[ind], ani_inds_2[ind]), 1:6], row.names = F)
+    # cat("\n")
+    # 
+    # # Print the kinship likelihoods
+    # print(pairs_data[ind, ], row.names = F, digits = 3)
+    # cat("\n\n")
+    
+    # # Print the information for the animals
+    # print(
+    #   cbind(
+    #     whale_data[ani_inds_1[ind], 1:6],
+    #     whale_data[ani_inds_2[ind], 1:6],
+    #     pairs_data[ind, ]
+    #   ), 
+    #   row.names = F,
+    #   digits = 3
+    # )
+    # cat("\n\n")
+    
+    # Print the information for the animals
+    print(
+      cbind(
+        cbind(
+          whale_data[ani_inds_1[ind], c(1, 4:6)],
+          whale_data[ani_inds_2[ind], c(1, 4:6)]
+        )[, rep(1:4, each = 2) + c(0, 4)],
+        pairs_data[ind, ]
+      ), 
+      row.names = F,
+      digits = 3
+    )
+    cat("\n\n")
+  }
+}
+
+# Print pairs data for first few possible parent-offspring pairs
+print_pairs(head(possible_pop_inds, 10))
+
+# The year, location, and field data is currently possibly randomly chosen from
+# among multiple recaptures...
+```
+
