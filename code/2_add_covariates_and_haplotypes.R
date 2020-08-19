@@ -158,8 +158,8 @@ whale_data <- whale_data[c(1, 32:31, 29:30, 28, 2:27)]
 ales_mat_1 <- as.matrix(whale_data[, 6 + ale_inds_1])
 ales_mat_2 <- as.matrix(whale_data[, 6 + ale_inds_2])
 
-# Find missing alleles
-# missing_ales_1 <- is.na(ales_mat_1)
+# Find missing alleles.  There is one case where the second allele is OOB so
+# use missing second-alleles to exclude it with the others
 missing_ales_2 <- is.na(ales_mat_2)
 
 

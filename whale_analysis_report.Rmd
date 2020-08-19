@@ -1,7 +1,6 @@
 ---
 title: "Right whale close kin report"
-author: "Robin"
-date: "31/05/2020"
+author: "Robin Aldridge-Sutton"
 output: html_document
 ---
 
@@ -9,32 +8,29 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This is a report I was making to separate various outputs that I thought were worth reporting from the code to process the data and save the results.  I never got it to even a first draft, and it's out of sync with the rest of the code now, for example there's no whale_analysis.Rdata anymore, but seems like its probably worth tidying up.  Might be a nice way to summarise the work.
+```{r}
+# Load imported and processed data.
+load("whale_analysis_6.Rdata")
+```
 
 ## Microsatellite genotypes, missing data, and homozygosity
 
+There were three rows in the table of all unique animals where it looks like the microsatellite genotypes got shifted to the left seven places and cut off. I copied the missing data from the 2009 sheet.
+
 ```{r}
-# Load imported and processed data.
-load("whale_analysis.Rdata")
+whale_data[
+  whale_data$Sample.Name %in% c("Eau09AI162", "Eau09AI208", "Eau09AI215"),
+  ]
+```
 
-
-# Review missing data
-
-# Show rows where one allele missing but other not
-whale_data[rowSums(missing_ales_1 != missing_ales_2) > 0, ]
-
-# Three of these are rows with blank cells that happen to start halfway through
-# a locus. I should check whether this data exists in the larger database.  
-
-# One is the line that had the OOB entry.
-
+```{r}
 # Show proportion of missing data overall
-round(mean(missing_ales_1), 3)
+round(mean(missing_ales_2), 3)
 
 # Find and show proportions of missing data by locus from largest to smallest
-props_missing <- round(colMeans(missing_ales_1), 3)
+props_missing <- round(colMeans(missing_ales_2), 3)
 names(props_missing) <- locus_names
-props_missing[order(prop_missing, decreasing = T)]
+props_missing[order(props_missing, decreasing = T)]
 
 
 # Review homozygosity
@@ -60,15 +56,17 @@ round(
 # Find proportion of homozygous alleles at each locus
 props_homo_obs <- colMeans(homo_ales, na.rm = T)
 
+excess_homozygosity <- props_homo_obs - props_homo_exp
+
 # Show observed versus expected homozygosity by locus from largest to smallest
 # difference
 round(
   data.frame(
     observed_homozygosity = props_homo_obs,
     expected_homozygosity = props_homo_exp,
-    excess_homozygosity = props_homo_obs - props_homo_exp,
+    excess_homozygosity,
     row.names = locus_names
-  )[head(order(abs(props_homo_unexp), decreasing = T)), ],
+  )[head(order(abs(excess_homozygosity), decreasing = T)), ],
   3
 )
 
