@@ -1,0 +1,282 @@
+---
+title: "Right whale close kin report"
+author: "Robin Aldridge-Sutton"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load results of analysis
+load(file = "rdata/whale_analysis_6.Rdata")
+```
+
+### Kinship log likelihoods
+
+```{r}
+# Show first kinship log likelihoods based on microsatellite genotypes
+head(kin_log_likes_msats_hps_sexes)
+```
+
+```{r}
+
+
+
+
+# Find number of possible parent-offspring pairs more likely to be half-siblings
+sum(possible_pop_kin_lls[, 2] > possible_pop_kin_lls[, 3])
+
+# When a pair has some loci that are very likely for pops but not for ups, and
+# vice versa, then the likelihood for hsps can bring them closer together, and
+# give a greater product than the larger of the other two, which makes sense.  I
+# feel like this should be cauchy schwartz or the triangle inequality or
+# something, but I can't figure it out lol.
+
+# or full-siblings
+sum(possible_pop_kin_lls[, 4] > possible_pop_kin_lls[, 3])
+
+# 19 pairs, for one mixed kinship, without inbreeding, suggests a decent number
+# of possible pops are more likely something else.
+
+# Function to print microsatellite genopair data - seems to be broken
+print_msats <- function(inds) {
+  for (ind in inds) {
+    print(
+      rbind(
+        shared_ales[ind, ],
+        both_ales_shared[ind, ],
+        round(kin_log_likes_msats[ind, ], 2),
+        MLK = max_like_kinships[ind]
+      )
+    )
+  }
+}
+
+# Print microsatellite genopair data for random selection of animals
+print_msats(sample(n_pairs, 10))
+
+
+
+# Show results for haplopairs
+cbind(
+  whale_data[ani_inds_1, c(4, 6)],
+  whale_data[ani_inds_2, c(4, 6)],
+  kin_log_likes_hts
+)[sample(n_pairs, 50), ]
+
+# Show kinship likelihoods given haplopairs and sexes for random selection of
+# animals
+cbind(
+  whale_data[ani_inds_1, c(3, 6)],
+  whale_data[ani_inds_2, c(3, 6)],
+  round(kin_log_likes_hps_sexes, 2),
+  MLK = max_like_kinships
+)[sample(n_pairs, 20), ]
+
+# The former are sometimes ignored when the haplotypes are known but one or both
+# of the sexes are unknown (eg. when it is less trivial than for unrelated
+# pairs) but this almost never happens in this data. It would be easy to add
+# later, as they are just the weight averages of the possible cases.
+
+```
+
+
+### Final kinship analyses
+
+```{r}
+# numbers of pairs for which each kinship is most likely, given only this data
+# (no prior probability)
+max_like_kin_tab
+
+# This isn't neccessarily that significant because it doesn't take into account
+# the prior probability of each kinship, but it could do if we had ages, or
+# expressions independent of ages, in terms of population parameters of
+# interest, in which case we could also estimate them by maximising the
+# likelihood of the observed genopairs.  In the meantime maybe go straight to
+# hsp vs up plods and look for distinct POPs. Looks like there might not be any.
+# Might be interesting mainly to check plods vs allele analysis
+
+# Find the number of pairs for which some parent-offspring kinship is most
+# likely
+sum(max_like_kin_tab[c("PO_OP", "PO", "OP")])
+
+# Check that the results match up with the shared allele analysis
+sum(max_like_kinship[possible_pop_inds] %in% c("PO_OP", "PO", "OP"))
+table(max_like_kinship[possible_pop_inds])
+```
+
+```{r}
+# Plot half-siblings versus unrelated pair plods
+
+# Set two plots per page
+par(mfrow = c(2, 1))
+
+# Plot full histogram
+hist(
+  hsp_up_plods, 
+  breaks = 200,
+  main = "Half-sibling versus unrelated pair PLODs",
+  xlab = "PLOD"
+)
+
+# Show rare values
+hist(
+  hsp_up_plods, 
+  breaks = 200,
+  main = "Large PLODs suggest close-kin",
+  xlab = "PLOD",
+  ylim = c(0, 50)
+)
+
+points(
+  poss_pop_hsp_plods, 
+  rep(0.05, length(possible_pop_inds)), 
+  pch = 'l', 
+  col = 2
+)
+```
+
+```{r}
+# Plot half-siblings versus unrelated pair plods for pairs with complete data
+
+# Set two plots per page
+par(mfrow = c(2, 1))
+
+# Plot full histogram
+hist(
+  hsp_up_plods_comp, 
+  breaks = 200,
+  main = "PLODs for pairs with complete data",
+  xlab = "PLOD"
+)
+
+# Show rare values
+hist(
+  hsp_up_plods_comp, 
+  breaks = 200,
+  main = "Large PLODs suggest close-kin",
+  xlab = "PLOD",
+  ylim = c(0, 20)
+)
+
+# Plot PLODs for possible POPs
+poss_pop_hsp_plods_comp_hist_data <- hist(
+  poss_pop_hsp_plods_comp, 
+  breaks = 100,
+  plot = F
+)
+plot(poss_pop_hsp_plods_comp_hist_data, add = T, border = 'red')
+
+# The possible POPs that were more likely to be UPs had missing data, not
+# surprising.  
+
+
+
+# Plot full-sibling versus unrelated pair plods for pairs with complete data
+
+# Set two plots per page
+par(mfrow = c(2, 1))
+
+# Plot full histogram
+hist(
+  fsp_up_plods_comp, 
+  breaks = 200,
+  main = "FSP vs UP PLODs for pairs with complete data",
+  xlab = "PLOD"
+)
+
+# Show rare values
+hist(
+  fsp_up_plods_comp, 
+  breaks = 200,
+  main = "Large PLODs suggest close-kin",
+  xlab = "PLOD",
+  ylim = c(0, 20)
+)
+
+# Plot PLODs for possible POPs
+poss_pop_fsp_plods_comp_hist_data <- hist(
+  poss_pop_fsp_plods_comp, 
+  breaks = 100,
+  plot = F
+)
+plot(poss_pop_fsp_plods_comp_hist_data, add = T, border = 'red')
+
+# Not much different.  Seems more noisy?  Widens the curve, but also pushes the
+# possible POPs to the right and narrows their curve?  Should check for the RAD
+# data.  Doesn't look like this data is enough to distinguish the actual POPs by
+# this method alone.
+```
+
+
+```{r}
+# Create table of kinship analysis data, including proportions of msat loci with
+# 0, 1, and 2 alleles shared, kinship likelihoods, and most likely kinship
+pairs_data <- data.frame(
+  round(
+    cbind(
+      props_loci_ns_ales_shared,
+      kin_log_likes_msats_hps_sexes
+    ),
+    2
+  ),
+  MLK = max_like_kinships
+)
+head(pairs_data)
+
+# These data are confusing without sex and haplotype
+
+
+
+# Create function to print pairs of animals and their kinship likelihoods given
+# their indices
+print_pairs <- function(pairs_inds) {
+  
+  # Loop over the indices
+  for (ind in pairs_inds) {
+    
+    # # Print the covariates for the animals
+    # print(whale_data[c(ani_inds_1[ind], ani_inds_2[ind]), 1:6], row.names = F)
+    # cat("\n")
+    # 
+    # # Print the kinship likelihoods
+    # print(pairs_data[ind, ], row.names = F, digits = 3)
+    # cat("\n\n")
+    
+    # # Print the information for the animals
+    # print(
+    #   cbind(
+    #     whale_data[ani_inds_1[ind], 1:6],
+    #     whale_data[ani_inds_2[ind], 1:6],
+    #     pairs_data[ind, ]
+    #   ), 
+    #   row.names = F,
+    #   digits = 3
+    # )
+    # cat("\n\n")
+    
+    # Print the information for the animals
+    print(
+      cbind(
+        cbind(
+          whale_data[ani_inds_1[ind], c(1, 4:6)],
+          whale_data[ani_inds_2[ind], c(1, 4:6)]
+        )[, rep(1:4, each = 2) + c(0, 4)],
+        pairs_data[ind, ]
+      ), 
+      row.names = F,
+      digits = 3
+    )
+    cat("\n\n")
+  }
+}
+
+# Print pairs data for first few possible parent-offspring pairs
+print_pairs(head(possible_pop_inds, 10))
+
+# The year, location, and field data is currently possibly randomly chosen from
+# among multiple recaptures...
+```
+

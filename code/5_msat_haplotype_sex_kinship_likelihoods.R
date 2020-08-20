@@ -6,6 +6,10 @@
 # pairs) but this almost never happens in this data. It would be easy to add
 # later, as they are just the weight averages of the possible cases.
 
+# The sex probabilities are approximated by 0.5, although it is more like 0.55
+# for being female.  But these are only relevant to distinguishing self-pairs,
+# which is easy with any decent genotype
+
 # Prepare data for finding conditional probabilities for haplotypes given
 # kinships and sexes
 
@@ -173,7 +177,10 @@ rm(hp_probs_sex_up, hp_probs_sex_hsp, hp_probs_sex_pop, hp_probs_sex_po,
 
 
 
-# Find kinship log likelihoods given sexes and haplopairs for simple kinships
+# Find kinship log likelihoods given sexes and haplopairs for simple kinships.
+# The sex probabilities are approximated by 0.5, although it is more like 0.55
+# for being female.  But these are only relevant to distinguishing self-pairs,
+# which is easy with any decent genotype
 
 # Probabilities for missing haplopairs are 1, logs are 0
 kin_log_likes_hps_sexes <- log_hp_probs_sex_kin

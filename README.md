@@ -22,11 +22,8 @@ The code could probably be sped up a lot by finding all possible geno-, haplo-, 
 
 It could also probably be simplified by setting NA probabilities to 1 and/or their logs to 0.  It only needs NAs sometimes where adding probabilities over cases, so it can be set to 1 or 0 at the end of such calculations.
 
-But these might not be worth doing unless/until I end up running simulations or something.
+These might not be worth fixing unless/until I end up running simulations or something.
 
 Things to do:
-- Fix the sex probabilities, they're not 0.5 (mean(whale_data$SEX == "M", na.rm = T) -> 0.455)
-- Get the final results sorted
-- Update the report and web app.  Don't need too much detail, just the main results/explanation.
-- Maybe combine the report and the readme
+- Update the report, readme, and web app depending on results.  Don't need too much detail, just the main results/explanation.  Maybe combine the report and the readme?
 - Make copy of web app for Global dataset.

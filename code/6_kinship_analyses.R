@@ -30,7 +30,7 @@ props_loci_ns_ales_shared <- data.frame(
 
 
 # Find pairs with complete data (microsatellites, haplotypes, and sexes)
-pairs_complete <- ns_loci_both_obs == 13 & hp_not_na & sexp_not_na 
+pairs_complete <- ns_loci_both_obs == 13 & !is.na(same_hts) & sexp_not_na 
 
 
 

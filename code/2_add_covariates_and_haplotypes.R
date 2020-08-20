@@ -1,6 +1,8 @@
 # Distinguish/integrate year, location, field, sex, and haplotype data. The
 # first three are currently possibly randomly chosen from among multiple
-# recaptures
+# recaptures.  I'm leaving the code to find them for these particular samples,
+# but I remove them from the data going forward.  I can add them back with
+# recaptures later if necessary
 
 # Read data from Males All, Females All, and Sheet1 sheets from big multi-sheet
 # file, and CI_QC_Unique, and UNIQUE MNZ may 2011 nc sheets from Mainland and
@@ -29,11 +31,12 @@ names(campbell)[c(1:2, 3)] <- names(mainland)[c(1, 4, 3)] <-
 campbell$field.data <- ""
 
 # Tidy up sample names for Mainland animals
-split_names <- strsplit(mainland$Sample.Name, " |\\(")
+split_names <- strsplit(as.character(mainland$Sample.Name), " |\\(")
 mainland$Sample.Name <- sapply(split_names, function(name_vec) name_vec[1])
 
 # Combine sex, field data, and haplotypes from all sheets.  rbind matches by
-# name not position
+# name not position.  This leaves some garbage factor levels in the haplotype
+# colmumn
 sex_field_hap <- rbind(
   males_all[1:314, c(1, 5:7)], 
   females_all[1:388, c(1, 5:7)], 
@@ -46,11 +49,10 @@ sex_field_hap <- rbind(
 # Remove duplicates
 sex_field_hap <- sex_field_hap[!duplicated(sex_field_hap$Sample.Name), ]
 
-
-
 # Tidy up haplotype, sex, and field data
 
-# Standardise terminology
+# Standardise terminology in haplotype and field data
+sex_field_hap$DLP <- as.character(sex_field_hap$DLP)
 sex_field_hap$DLP[
   sex_field_hap$DLP %in% c(
     "PorHap4.1", 
@@ -73,6 +75,7 @@ sex_field_hap$DLP[sex_field_hap$DLP %in% c("E", "BAKHAPE")] <- "BakHapE"
 sex_field_hap$DLP[sex_field_hap$DLP == "PATMALHAPB"] <- "PatMalHapB"
 sex_field_hap$DLP[sex_field_hap$DLP == "PORHAP17"] <- "PorHap17"
 
+sex_field_hap$field.data <- as.character(sex_field_hap$field.data)
 sex_field_hap$field.data[sex_field_hap$field.data %in% c("CALF", "calf")] <-
   "Calf"
 sex_field_hap$field.data[
@@ -157,6 +160,10 @@ whale_data <- whale_data[c(1, 32:31, 29:30, 28, 2:27)]
 # Convert updated data to matrices for better access
 ales_mat_1 <- as.matrix(whale_data[, 6 + ale_inds_1])
 ales_mat_2 <- as.matrix(whale_data[, 6 + ale_inds_2])
+
+# Remove year, location, and field data columns.  Can add back if/when integrate
+# over multiple captures
+whale_data <- whale_data[-c(2:3, 5)]
 
 # Find missing alleles.  There is one case where the second allele is OOB so
 # use missing second-alleles to exclude it with the others
