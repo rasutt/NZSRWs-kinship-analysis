@@ -1,7 +1,10 @@
 ---
 title: "NZSRW kinship analysis"
 author: "Robin Aldridge-Sutton"
-output: md_document
+output:   
+  md_document:
+    variant: gfm
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
