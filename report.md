@@ -1,3 +1,7 @@
+NZSRW kinship analysis
+================
+Robin Aldridge-Sutton
+
   - [Microsatellite genotypes, missing data, and
     homozygosity](#microsatellite-genotypes-missing-data-and-homozygosity)
   - [Covariates and haplotypes](#covariates-and-haplotypes)
