@@ -21,10 +21,6 @@ head(kin_log_likes_msats_hps_sexes)
 ```
 
 ```{r}
-
-
-
-
 # Find number of possible parent-offspring pairs more likely to be half-siblings
 sum(possible_pop_kin_lls[, 2] > possible_pop_kin_lls[, 3])
 
