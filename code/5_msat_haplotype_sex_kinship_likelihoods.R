@@ -162,13 +162,13 @@ hp_probs_sex_fsp[which(!same_hts)] <- 0
 
 # Combine log haplopair probabilities given sexes and simple kinships
 log_hp_probs_sex_kin <- data.frame(
-  unrelated = log(hp_probs_sex_up),
-  half_sibs = log(hp_probs_sex_hsp),
-  po_op = log(hp_probs_sex_pop),
-  po = log(hp_probs_sex_po),
-  op = log(hp_probs_sex_op),
-  full_sibs = log(hp_probs_sex_fsp),
-  self = log(hp_probs_sex_sp)
+  UP = log(hp_probs_sex_up),
+  SOK = log(hp_probs_sex_hsp),
+  PO_OP = log(hp_probs_sex_pop),
+  PO = log(hp_probs_sex_po),
+  OP = log(hp_probs_sex_op),
+  SOKX2 = log(hp_probs_sex_fsp),
+  SP = log(hp_probs_sex_sp)
 )
 
 # Remove haplopair probabilities as no longer needed
