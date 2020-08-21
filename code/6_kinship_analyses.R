@@ -55,32 +55,6 @@ hsp_up_plods <-
 # Find PLODs for pairs with complete data
 hsp_up_plods_comp <- hsp_up_plods[pairs_complete]
 
-# Find PLODs for possible POPs
-poss_pop_hsp_plods <- hsp_up_plods[possible_pop_inds]
-
-# Find PLODs for possible POPs with complete data
-poss_pop_hsp_plods_comp <- poss_pop_hsp_plods[
-  pairs_complete[possible_pop_inds]
-]
-
-
-
-# Find full-siblings versus unrelated pair plods 
-fsp_up_plods <- 
-  (kin_log_likes_msats_hps_sexes$SOKx2 - kin_log_likes_msats_hps_sexes$UP) / 
-  ns_loci_both_obs
-
-# Find PLODs for pairs with complete data
-fsp_up_plods_comp <- fsp_up_plods[pairs_complete]
-
-# Find PLODs for possible POPs
-poss_pop_fsp_plods <- fsp_up_plods[possible_pop_inds]
-
-# Find PLODs for possible POPs with complete data
-poss_pop_fsp_plods_comp <- poss_pop_fsp_plods[
-  pairs_complete[possible_pop_inds]
-]
-
 
 
 # Save data as R objects
