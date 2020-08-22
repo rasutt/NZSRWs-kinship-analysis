@@ -1,6 +1,12 @@
+# App to display possible POPs.  Taken down because haven't distinguished which
+# are likely POPs.  Also the year and location data was arbitrary from often
+# multiple recaptures
+
+# Load shiny and data for possible POPs
 library(shiny)
 load("whales_and_possible_pop_indices.dat")
 
+# Define UI with a plot and a table
 ui <- basicPage(
   plotOutput(
     "plot1", 
@@ -11,7 +17,9 @@ ui <- basicPage(
   tableOutput("info")
 )
 
+# Define server logic
 server <- function(input, output) {
+  
   # Set reactive for selected animals to all false
   vals <- reactiveValues(
     selected_animals = rep(F, nrow(whale_genotypes))
@@ -29,10 +37,14 @@ server <- function(input, output) {
     )$selected_
   })
   
+  # Display plot
   output$plot1 <- renderPlot({
+    
+    # Set margin widths and text size
     par(mar = par()$mar - c(3.5, 0, 1, 0))
     par(cex = 0.95)
     
+    # Setup plot axes and title
     plot.new()
     plot.window(
       xlim = c(0, 1),
@@ -47,14 +59,17 @@ server <- function(input, output) {
       main = "New Zealand southern right whales and parent-offspring connections",
       ylab = "Capture year"
     )
-
+    
+    # Get capture locations and one for selected animal
     capture_locations <- whale_genotypes$capture_location
     selected_capture_location <- capture_locations[vals$selected_animals]
     
+    # Find kin of selected animal
     selected_kin <- 
       (vals$selected_animals[first_possible_parent_offspring_pair_index] |
          vals$selected_animals[second_possible_parent_offspring_pair_index])
-
+    
+    # Draw lines for each pair, wider and coloured for selected ones
     segments(
       first_possible_parent_offspring_animal_x,
       first_possible_parent_offspring_animal_y,
@@ -67,8 +82,9 @@ server <- function(input, output) {
           1 * (selected_capture_location == "Mainland NZ")
       )[1 + selected_kin],
       lwd = c(1, 2)[1 + selected_kin]
-  )
+    )
     
+    # Draw points for animals, wider for selected
     points(
       x = whale_genotypes$x,
       y = whale_genotypes$capture_year,
@@ -79,6 +95,7 @@ server <- function(input, output) {
       pch = 20
     )
     
+    # Add legend
     legend(
       "bottomleft", 
       legend = c(
@@ -92,22 +109,27 @@ server <- function(input, output) {
     )
   })
   
+  # Print table for selected kin
   # output$info <- renderPrint({
   output$info <- renderTable({
+    
+    # Find selected kin
     selected_kin <- c(
       first_possible_parent_offspring_pair_index[
         vals$selected_animals[second_possible_parent_offspring_pair_index]
-        ],
+      ],
       second_possible_parent_offspring_pair_index[
         vals$selected_animals[first_possible_parent_offspring_pair_index]
-        ]
+      ]
     )
     
+    # Select rows and columns to print
     whale_genotypes[
       c(which(vals$selected_animals), selected_kin), 
       c(1, 28, 29, 2:27)
-      ]
+    ]
   })
 }
 
+# Run app
 shinyApp(ui, server)
