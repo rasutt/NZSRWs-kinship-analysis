@@ -12,17 +12,13 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ### Introduction
 
-This is an analysis of the pairwise kinships among a sample of NZ southern right whales using microsatellite genotypes, MtDNA haplotypes, and sex.  It is organised into 6 numbered scripts, and source_scripts.R is used to conveniently call those that are required when changes are made.  It takes multiple csv files as inputs, and writes a single new csv file with integrated data for ~90% of the animals sampled. The data are largely from [Carroll, Emma. (2012) Return of the right whale: Assessment of abundance, population structure and geneflow in the New Zealand southern right whale.](http://hdl.handle.net/2292/11541) 
+This is an analysis of the pairwise kinships among a sample of NZ southern right whales using microsatellite genotypes, MtDNA haplotypes, and sex.  It is organised into 6 numbered scripts, and source_scripts.R is used to conveniently call those that are required when changes are made.  It takes multiple csv files as inputs, and writes a single new csv file with integrated data for ~95% of the animals sampled. The data are largely from [Carroll, Emma. (2012) Return of the right whale: Assessment of abundance, population structure and geneflow in the New Zealand southern right whale](http://hdl.handle.net/2292/11541).  The main results are summarised in the other sections of this readme.
 
-For each pair it finds the number of microsatellite loci at which they share one or two alleles, as a simple heuristic for kinship, then it finds the precise likelihoods given to various simple kinships by all of the data, and the half-sibling versus unrelated pair PLODS.  
+For each pair it finds the number of microsatellite loci at which they share one or two alleles, as a simple heuristic for kinship, then it finds pseudolikelihoods given to various simple kinships by all of the data, and the half-sibling versus unrelated pair pseudo-log likelihood ratios.  
 
 It saves pairs which could be POPs according to their observed microsatellite genotypes, and has a shiny app to display them along with one of the years and locations at which they were sampled, but I took it down because I have not been able to distinguish likely POPs so far.
 
 The likelihood calculations could probably be sped up and simplified by finding all possible geno-, haplo-, and sex-pair probabilities just once, and then just indexing them for each observed pair, and by setting probabilities for missing data to 1 when they are no longer needed for adding probabilities over cases.  But these are probably not worth doing unless I end up running simulations with this kind of data.
-
-Things to do:
-- Update the report.  Don't need too much detail, just the main results/explanation.
-- Add a link to my dissertation for explanation.
 
 ```{r}
 # Load results of analysis
@@ -69,9 +65,9 @@ replicate samples."
 
 If we had borderline cases of kinship we could check how this affected them.
 
-### Shared microsatellite alleles, kinship likelihoods, and parent-offspring pairs
+### Shared microsatellite alleles, kinship likelihoods, and possible parent-offspring pairs
 
-Parent-offspring pairs (POPs) share an allele by descent at each locus.  This is not enough to distinguish them from these microsatellite genotypes, but we can find the pairs that could possibly be POPs according to them (bearing in mind genotyping error), and check that the more sophisticated analyses below give the same results.
+Parent-offspring pairs (POPs) share an allele by descent at each locus.  This is not enough to distinguish them with these microsatellite genotypes, but we can find the pairs that could possibly be POPs according to them (bearing in mind genotyping error), and check that the more sophisticated analyses below give the same results.
 
 ```{r}
 # Plot the proportions of loci where pairs are observed to share at least one
@@ -88,7 +84,7 @@ hist(
 
 It is possible to have genotypes that share an allele at a locus but which are still more likely to be unrelated than to be a POP.  For example, if a pair of  microsatellite genotypes are each heterozygous at a locus, and only shares one allele, the conditional probability of the second given that they are unrelated is twice the product of the allele probabilities, and given that they are a POP it is half the unshared allele probability.  So if the probability of the shared allele is greater than one quarter, the unrelated pair prob is higher.  For SNPs, allele probabilities are often greater than one quarter, but you can't have two heterozygous genotypes that only share one allele.  Many of the microsatellite alleles in this dataset have probabilities greater than one quarter, and a few pairs share an allele at every locus but are more likely to be UPs.
 
-
+Here are the proportions of microsatellite loci where alleles are shared, the likelihoods given to the main simple kinships, and the maximum likelihood kinship, for the first few genopairs, and the first few possible POPs.
 
 ```{r}
 # Create table of kinship analysis data, including proportions of msat loci with
@@ -103,10 +99,9 @@ print(head(pairs_data), row.names = F)
 print(pairs_data[head(possible_pop_inds), ], row.names = F)
 ```
 
-
 ### Kinship log likelihoods based on sexes and haplotypes
 
-
+Here are the sexes and haplotypes, the likelihoods given by them to the main simple kinships, and the maximum likelihood kinship, for a random sample of genopairs.  When any of the data is missing the likelihoods are ignored although it is possible to calculate them later if necessary. 
 
 ```{r}
 # Show kinship likelihoods given haplopairs and sexes for random selection of
@@ -118,15 +113,11 @@ pairs_data <- data.frame(
   MLK = max_like_kinships_hps_sexes
 )
 print(pairs_data[sample(n_pairs, 10), ], row.names = F)
-
-
-# The former are sometimes ignored when the haplotypes are known but one or both
-# of the sexes are unknown (eg. when it is less trivial than for unrelated
-# pairs) but this almost never happens in this data. It would be easy to add
-# later, as they are just the weighted averages of the possible cases.
 ```
 
 ### Combined kinship log likelihood ratios
+
+The pseudo-log likelihood ratios do not clearly distinguish any kinships for this data, although it may be possible to apply a thresholding technique later.
 
 ```{r}
 # Plot half-siblings versus unrelated pair plods for pairs with complete data
@@ -138,7 +129,7 @@ par(mfrow = c(2, 1))
 hist(
   hsp_up_plods_comp, 
   breaks = 200,
-  main = "Half-sibling vs unrelated pair PLODs 
+  main = "Half-sibling vs unrelated pair PLLRs 
   for pairs with complete data",
   xlab = "PLOD"
 )
@@ -152,4 +143,3 @@ hist(
   ylim = c(0, 20)
 )
 ```
-

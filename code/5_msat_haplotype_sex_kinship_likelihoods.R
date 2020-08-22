@@ -4,7 +4,7 @@
 # The former are sometimes ignored when the haplotypes are known but one or both
 # of the sexes are unknown (eg. when it is less trivial than for unrelated
 # pairs) but this almost never happens in this data. It would be easy to add
-# later, as they are just the weight averages of the possible cases.
+# later, as they are just the weighted averages of the possible cases.
 
 # The sex probabilities are approximated by 0.5, although it is more like 0.55
 # for being female.  But these are only relevant to distinguishing self-pairs,
@@ -184,10 +184,10 @@ rm(hp_probs_sex_up, hp_probs_sex_hsp, hp_probs_sex_pop, hp_probs_sex_po,
 
 # Probabilities for missing haplopairs are 1, logs are 0
 kin_log_likes_hps_sexes <- log_hp_probs_sex_kin
-kin_log_likes_hps_sexes[is.na(log_hp_probs_sex_kin)] <- 0
+sexp_not_na <- !is.na(same_sex)
+kin_log_likes_hps_sexes[!sexp_not_na | is.na(same_hts), ] <- 0
 
 # Non-self kinships, sex-pairs are independent
-sexp_not_na <- !is.na(same_sex)
 kin_log_likes_hps_sexes[sexp_not_na, 1:6] <-
   kin_log_likes_hps_sexes[sexp_not_na, 1:6] + log(1/4)
 
